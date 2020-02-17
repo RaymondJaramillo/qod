@@ -5,9 +5,9 @@ import edu.cnm.deepdive.qod.model.entity.Source;
 import edu.cnm.deepdive.qod.service.QuoteRepository;
 import edu.cnm.deepdive.qod.service.SourceRepository;
 import java.net.URI;
-import java.util.Objects;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +25,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/quotes")
+@ExposesResourceFor(Quote.class)
 public class QuoteController {
 
   private final QuoteRepository quoteRepository;
@@ -40,10 +41,7 @@ public class QuoteController {
       produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Quote> post(@RequestBody Quote quote) {
     quoteRepository.save(quote);
-    URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-        .path("/{id}")
-        .build(quote.getId());
-    return ResponseEntity.created(location).body(quote);
+    return ResponseEntity.created(quote.getHref()).body(quote);
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -53,6 +51,9 @@ public class QuoteController {
 
   @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
   public Iterable<Quote> search(@RequestParam("q") String fragment) {
+    if (fragment.length() < 3) {
+      throw new SearchTermTooShortException();
+    }
     return quoteRepository.getAllByTextContainsOrderByTextAsc(fragment);
   }
 
@@ -87,7 +88,7 @@ public class QuoteController {
     quoteRepository.findById(id).ifPresent(quoteRepository::delete);
   }
 
-  @PutMapping(value = "/{quoteId}/source/{sourceId}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(value = "{quoteId}/source/{sourceId}", produces = MediaType.APPLICATION_JSON_VALUE)
   public Quote attach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
     Quote quote = get(quoteId);
     Source source = sourceRepository.findById(sourceId).get();
@@ -98,7 +99,7 @@ public class QuoteController {
     return quote;
   }
 
-  @DeleteMapping(value = "/{quoteId}/source/{sourceId}")
+  @DeleteMapping(value = "{quoteId}/source/{sourceId}")
   public Quote detach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
     Quote quote = get(quoteId);
     Source source = sourceRepository.findById(sourceId).get();
@@ -109,7 +110,7 @@ public class QuoteController {
     return quote;
   }
 
-  @DeleteMapping(value = "/{quoteId}/source")
+  @DeleteMapping(value = "{quoteId}/source")
   public Quote clearSource(@PathVariable UUID quoteId) {
     Quote quote = get(quoteId);
     quote.setSource(null);
