@@ -1,5 +1,6 @@
-package edu.cnm.deepdive.qod.controller;
+package edu.cnm.deepdive.qod.controller.rest;
 
+import edu.cnm.deepdive.qod.controller.SearchTermTooShortException;
 import edu.cnm.deepdive.qod.model.entity.Quote;
 import edu.cnm.deepdive.qod.model.entity.Source;
 import edu.cnm.deepdive.qod.service.QuoteRepository;
@@ -57,6 +58,16 @@ public class QuoteController {
     return quoteRepository.getAllByTextContainsOrderByTextAsc(fragment);
   }
 
+  @GetMapping(value = "/random", produces = MediaType.APPLICATION_JSON_VALUE)
+  public Quote getRandom() {
+    return quoteRepository.getRandom().get();
+  }
+
+  @GetMapping(value = "/random", produces = MediaType.TEXT_PLAIN_VALUE)
+  public String getRandomPlain() {
+    return getRandom().getText();
+  }
+
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   public Quote get(@PathVariable UUID id) {
     return quoteRepository.findById(id).get();
@@ -88,7 +99,7 @@ public class QuoteController {
     quoteRepository.findById(id).ifPresent(quoteRepository::delete);
   }
 
-  @PutMapping(value = "{quoteId}/source/{sourceId}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(value = "/{quoteId}/source/{sourceId}", produces = MediaType.APPLICATION_JSON_VALUE)
   public Quote attach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
     Quote quote = get(quoteId);
     Source source = sourceRepository.findById(sourceId).get();
@@ -99,7 +110,7 @@ public class QuoteController {
     return quote;
   }
 
-  @DeleteMapping(value = "{quoteId}/source/{sourceId}")
+  @DeleteMapping(value = "/{quoteId}/source/{sourceId}")
   public Quote detach(@PathVariable UUID quoteId, @PathVariable UUID sourceId) {
     Quote quote = get(quoteId);
     Source source = sourceRepository.findById(sourceId).get();
@@ -110,7 +121,7 @@ public class QuoteController {
     return quote;
   }
 
-  @DeleteMapping(value = "{quoteId}/source")
+  @DeleteMapping(value = "/{quoteId}/source")
   public Quote clearSource(@PathVariable UUID quoteId) {
     Quote quote = get(quoteId);
     quote.setSource(null);
