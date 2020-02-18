@@ -1,4 +1,4 @@
-package edu.cnm.deepdive.qod.controller;
+package edu.cnm.deepdive.qod.exception;
 
 public class SearchTermTooShortException extends IllegalArgumentException{
 
